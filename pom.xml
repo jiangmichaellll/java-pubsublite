@@ -39,6 +39,7 @@
         <artifactId>error_prone_annotations</artifactId>
         <version>2.4.0</version>
       </dependency>
+
       <dependency>
         <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
@@ -118,6 +119,7 @@
     <module>proto-google-cloud-pubsublite-v1</module>
     <module>pubsublite-kafka-shim</module>
     <module>pubsublite-beam-io</module>
+    <module>pubsublite-spark-sql-streaming</module>
   </modules>
 
   <profiles>

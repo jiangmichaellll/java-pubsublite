@@ -1,20 +1,4 @@
-/*
- * Copyright 2020 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.google.cloud.pubsublite.kafka;
+package com.google.cloud.pubsublite.spark;
 
 import com.google.cloud.pubsublite.*;
 import com.google.common.collect.ImmutableList;
@@ -23,6 +7,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
+import com.google.protobuf.util.Timestamps;
 import io.grpc.StatusException;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.Metric;
@@ -30,6 +15,9 @@ import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.UnsupportedVersionException;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.apache.kafka.common.record.TimestampType;
 
 import java.time.Duration;
 import java.util.*;
@@ -42,6 +30,11 @@ public class FakeConsumer implements Consumer<byte[], byte[]> {
     private static long ENDING_OFFSET = 1000000;
     private static TopicPartition TOPIC_PARTITION = new TopicPartition("test-topic", 0);
     private long position = STARTING_OFFSET;
+    private long commitPosition = STARTING_OFFSET;
+
+
+
+    static int upperBound = 1000;
 
     public FakeConsumer(Map<String, Object> inputMap) {
         if (inputMap.isEmpty()) {
@@ -49,8 +42,29 @@ public class FakeConsumer implements Consumer<byte[], byte[]> {
         }
     }
 
+    static ConsumerRecord<byte[], byte[]> fromMessage(SequencedMessage message, TopicPath topic, Partition partition) {
+        Headers headers = new RecordHeaders();
+        TimestampType type;
+        Timestamp timestamp;
+        if (message.message().eventTime().isPresent()) {
+            type = TimestampType.CREATE_TIME;
+            timestamp = (Timestamp)message.message().eventTime().get();
+        } else {
+            type = TimestampType.LOG_APPEND_TIME;
+            timestamp = message.publishTime();
+        }
+
+        return new ConsumerRecord(topic.toString(), (int)partition.value(), message.offset().value(), Timestamps.toMillis(timestamp), type, 0L, message.message().key().size(), message.message().data().size(), message.message().key().toByteArray(), message.message().data().toByteArray(), headers);
+    }
+
     @Override
     public ConsumerRecords<byte[], byte[]> poll(Duration duration) {
+
+        upperBound--;
+        if (upperBound < 0) {
+            return ConsumerRecords.empty();
+        }
+
         try {
             Map<TopicPartition, List<ConsumerRecord<byte[], byte[]>>> records = new HashMap<>();
             List<ConsumerRecord<byte[], byte[]>> rl = new ArrayList<>();
@@ -69,7 +83,7 @@ public class FakeConsumer implements Consumer<byte[], byte[]> {
                                                     "zzz",
                                                     ByteString.copyFromUtf8("zzz")))
                                     .build(), Timestamp.newBuilder().setNanos(12345).build(), Offset.of(this.position), 123L);
-            rl.add(RecordTransforms.fromMessage(sequencedMessage, TopicPath.newBuilder()
+            rl.add(fromMessage(sequencedMessage, TopicPath.newBuilder()
                     .setProject(ProjectNumber.of(123))
                     .setLocation(CloudZone.of(CloudRegion.of("us-central1"), 'a'))
                     .setName(TopicName.of("test-topic"))
@@ -200,7 +214,7 @@ public class FakeConsumer implements Consumer<byte[], byte[]> {
     public Map<TopicPartition, OffsetAndMetadata> committed(
             Set<TopicPartition> partitions, Duration timeout) {
         ImmutableMap.Builder<TopicPartition, OffsetAndMetadata> output = ImmutableMap.builder();
-        output.put(TOPIC_PARTITION, new OffsetAndMetadata(this.position));
+        output.put(TOPIC_PARTITION, new OffsetAndMetadata(this.commitPosition));
         return output.build();
     }
 
@@ -308,3 +322,4 @@ public class FakeConsumer implements Consumer<byte[], byte[]> {
     }
 
 }
+
