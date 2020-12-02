@@ -1,1 +1,1 @@
-com.google.cloud.pubsublite.spark.PubSubLiteSourceProvider
+com.google.cloud.pubsublite.spark.PslDataSource
