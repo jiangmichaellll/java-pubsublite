@@ -47,15 +47,19 @@ public final class PslSourceOffset extends org.apache.spark.sql.sources.v2.reade
   }
 
   public static PslSourceOffset fromJson(String json) {
-    Map<Long, Long> map = ImmutableMap.of(0L, 10L, 1L, 11L);
+    Map<String, Number> map;
     try {
-      map = objectMapper.readValue(json, new TypeReference<Map<Long, Long>>() {});
+      // TODO: Use TypeReference instead of Map.class, currently TypeReference breaks spark with
+      // java.lang.LinkageError: loader constraint violation: loader previously initiated loading
+      // for a different type.
+      map = objectMapper.readValue(json, Map.class);
     } catch (IOException e) {
       throw new IllegalStateException("Unable to deserialize PslSourceOffset.", e);
     }
     Map<Partition, Offset> partitionOffsetMap =
         map.entrySet().stream()
-            .collect(Collectors.toMap(e -> Partition.of(e.getKey()), e -> Offset.of(e.getValue())));
+            .collect(Collectors.toMap(e -> Partition.of(Long.parseLong(e.getKey())),
+                    e -> Offset.of(e.getValue().longValue())));
     return new PslSourceOffset(partitionOffsetMap);
   }
 

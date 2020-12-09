@@ -25,10 +25,10 @@ public class PslSourceOffsetTest {
     PslSourceOffset offset =
         new PslSourceOffset(
             ImmutableMap.of(
-                Partition.of(3L), Offset.of(10L),
+                Partition.of(3L), Offset.of(Long.MAX_VALUE - 1000),
                 Partition.of(1L), Offset.of(5L),
                 Partition.of(2L), Offset.of(8L)));
-    assertThat(offset.json()).isEqualTo("{\"1\":5,\"2\":8,\"3\":10}");
+    assertThat(offset.json()).isEqualTo("{\"1\":5,\"2\":8,\"3\":9223372036854774807}");
     assertThat(PslSourceOffset.fromJson(offset.json())).isEqualTo(offset);
   }
 
