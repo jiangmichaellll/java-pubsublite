@@ -1,6 +1,7 @@
 package com.google.cloud.pubsublite.spark;
 
 import com.google.api.gax.rpc.ApiException;
+import com.google.cloud.pubsublite.Message;
 import com.google.cloud.pubsublite.Offset;
 import com.google.cloud.pubsublite.SequencedMessage;
 import com.google.cloud.pubsublite.cloudpubsub.FlowControlSettings;
@@ -11,12 +12,14 @@ import com.google.cloud.pubsublite.internal.wire.PubsubContext;
 import com.google.cloud.pubsublite.internal.wire.Subscriber;
 import com.google.cloud.pubsublite.internal.wire.SubscriberBuilder;
 import com.google.cloud.pubsublite.proto.Cursor;
+import com.google.cloud.pubsublite.proto.PubSubMessage;
 import com.google.cloud.pubsublite.proto.SeekRequest;
 import com.google.cloud.pubsublite.v1.SubscriberServiceClient;
 import com.google.cloud.pubsublite.v1.SubscriberServiceSettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.flogger.GoogleLogger;
+import com.google.protobuf.Timestamp;
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.sources.v2.reader.ContinuousInputPartition;
 import org.apache.spark.sql.sources.v2.reader.InputPartitionReader;
@@ -127,21 +130,24 @@ public class PslContinuousInputPartition implements ContinuousInputPartition<Int
         @Override
         public boolean next() {
             currentMsg = Optional.empty();
-            try {
-                while (!subscriber.hasNext()) {
-                    Thread.sleep(10);
-                }
-                return true;
-            } catch (CheckedApiException | InterruptedException e) {
-                throw new IllegalStateException("Failed to call subscriber hasNext.", e);
-            }
+            return true;
+//            try {
+//                while (!subscriber.hasNext()) {
+//                    Thread.sleep(10);
+//                }
+//                return true;
+//            } catch (CheckedApiException | InterruptedException e) {
+//                throw new IllegalStateException("Failed to call subscriber hasNext.", e);
+//            }
         }
 
         @Override
         public InternalRow get() {
             if (!currentMsg.isPresent()) {
-                try {
-                    currentMsg = subscriber.pullOne();
+//                try {
+                    currentMsg = Optional.of(SequencedMessage.of(Message.builder().build(),
+                            Timestamp.getDefaultInstance(), Offset.of(10), 10L));
+//                    currentMsg = subscriber.pullOne();
                     assert currentMsg.isPresent()
                             : "Unable to pull message from subscriber for " + currentOffset.toString();
                     currentOffset =
@@ -151,10 +157,10 @@ public class PslContinuousInputPartition implements ContinuousInputPartition<Int
                                     .offset(currentMsg.get().offset())
                                     .build();
 
-                } catch (CheckedApiException e) {
-                    throw new IllegalStateException(
-                            "Unable to pull message from subscriber for " + currentOffset.toString(), e);
-                }
+//                } catch (CheckedApiException e) {
+//                    throw new IllegalStateException(
+//                            "Unable to pull message from subscriber for " + currentOffset.toString(), e);
+//                }
             }
             log.atWarning().log("oh message :" + currentMsg.get().toString());
             return PslSparkUtils.toInternalRow(currentMsg.get(), currentOffset.subscriptionPath(),

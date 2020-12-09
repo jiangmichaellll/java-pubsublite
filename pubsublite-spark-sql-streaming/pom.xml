@@ -61,9 +61,7 @@
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-pubsublite</artifactId>
-            <version>0.6.6-SNAPSHOT</version><!-- {x-version-update:google-cloud-pubsublite:current} -->
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/google-cloud-pubsublite-0.6.6-SNAPSHOT.jar</systemPath>
+            <version>0.6.5</version><!-- {x-version-update:google-cloud-pubsublite:current} -->
         </dependency>
         <dependency>
             <groupId>com.google.cloud</groupId>
@@ -213,6 +211,13 @@
                                     <artifact>log4j:*</artifact>
                                     <excludes>
                                         <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>io.grpc:grpc-grpclb</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/services/io.grpc.LoadBalancerProvider</exclude>
+                                        <exclude>META-INF/services/io.grpc.NameResolverProvider</exclude>
                                     </excludes>
                                 </filter>
                                 <filter>

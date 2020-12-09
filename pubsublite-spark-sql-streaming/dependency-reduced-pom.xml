@@ -79,6 +79,13 @@
                   </excludes>
                 </filter>
                 <filter>
+                  <artifact>io.grpc:grpc-grpclb</artifact>
+                  <excludes>
+                    <exclude>META-INF/services/io.grpc.LoadBalancerProvider</exclude>
+                    <exclude>META-INF/services/io.grpc.NameResolverProvider</exclude>
+                  </excludes>
+                </filter>
+                <filter>
                   <artifact>*:*</artifact>
                   <excludes>
                     <exclude>META-INF/maven/**</exclude>
@@ -190,13 +197,6 @@
       <version>1.60.0</version>
       <classifier>testlib</classifier>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-pubsublite</artifactId>
-      <version>0.6.6-SNAPSHOT</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/resources/google-cloud-pubsublite-0.6.6-SNAPSHOT.jar</systemPath>
     </dependency>
   </dependencies>
   <properties>

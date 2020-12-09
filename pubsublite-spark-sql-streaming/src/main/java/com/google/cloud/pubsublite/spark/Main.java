@@ -129,7 +129,7 @@ public class Main {
                 .getOrCreate();
         try {
             spark.readStream().format("pubsublite")
-//                    .option(Constants.CREDENTIALS_FILE_CONFIG_KEY, "/Users/jiangmichael/key.json")
+                    .option(Constants.CREDENTIALS_FILE_CONFIG_KEY, "/Users/jiangmichael/key.json")
                     .option("pubsublite.subscription",
                             "projects/358307816737/locations/us-central1-a/subscriptions/test-spark-subscription")
                     .load()
